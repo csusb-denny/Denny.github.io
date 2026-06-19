@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="chart">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Denny Le — dennyle.dev</title>
+<meta name="description" content="Denny Le — Software Engineer. Full-stack developer (FastAPI, PostgreSQL, Firebase) and RF engineer measuring the wireless signals those systems run on.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============ TOKENS — chart palette ============ */
+  /* Chart mode: warm blue-gray canvas, white panels, teal+purple+green accents */
+  :root,
+  :root[data-theme="chart"]{
+    --bg-void:#D8E0EB;
+    --bg-panel:#FFFFFF;
+    --bg-elevated:#EEF2F7;
+    --bg-hover:#E2E8F2;
+    --line:#C2CDD9;
+    --fg:#1A2233;
+    --fg-dim:#4A5568;
+    --fg-faint:#8FA0B8;
+    --teal:#1DBBBB;
+    --teal-dim:#B0E4E4;
+    --purple:#7055B0;
+    --purple-dim:#D4CCE8;
+    --green:#4A9A4A;
+    --green-dim:#C5E5C5;
+    --amber:var(--teal);
+    --amber-dim:var(--teal-dim);
+    --cyan:var(--purple);
+    --cyan-dim:var(--purple-dim);
+    --red:#C43A3A;
+    --on-amber:#FFFFFF;
+    --shadow: 0 4px 16px rgba(20,40,80,0.10);
+    --radius-sm:3px;
+    --radius-md:6px;
+    --mono: 'IBM Plex Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px; --sp-8:64px;
+  }
+  :root[data-theme="dark"]{
+    --bg-void:#111827;
+    --bg-panel:#1A2236;
+    --bg-elevated:#1F2D44;
+    --bg-hover:#253450;
+    --line:#2C3E58;
+    --fg:#D6E4F5;
+    --fg-dim:#7B98BC;
+    --fg-faint:#4A6080;
+    --teal:#2DC4C4;
+    --teal-dim:#1A5A5A;
+    --purple:#9B7EC8;
+    --purple-dim:#3A2860;
+    --green:#5CA85C;
+    --green-dim:#1E3C1E;
+    --amber:var(--teal);
+    --amber-dim:var(--teal-dim);
+    --cyan:var(--purple);
+    --cyan-dim:var(--purple-dim);
+    --red:#E05555;
+    --on-amber:#0A1A1A;
+    --shadow: 0 8px 28px rgba(0,0,0,0.50);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg-void);
+    color:var(--fg);
+    font-family:var(--mono);
+    font-size:15px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* subtle chart-grid on the void background */
+  :root[data-theme="chart"] body{
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-color:var(--bg-void);
+  }
+  /* dark mode gets a darker grid */
+  :root[data-theme="dark"] body{
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-color:var(--bg-void);
+  }
+  ::selection{ background:var(--amber); color:var(--on-amber); }
+  a{ color:var(--cyan); text-decoration:none; }
+  a:hover{ text-decoration:underline; }
+  button{ font-family:var(--mono); cursor:pointer; }
+  :focus-visible{ outline:2px solid var(--amber); outline-offset:2px; border-radius:2px; }
+  ul{ margin:0; padding:0; list-style:none; }
+  p{ margin:0 0 var(--sp-3); color:var(--fg-dim); }
+  h1,h2,h3,h4{ margin:0; font-weight:600; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
+  }
+
+  /* ============ APP SHELL ============ */
+  .app{ display:flex; flex-direction:column; min-height:100vh; }
+
+  /* ---- titlebar ---- */
+  .titlebar{
+    display:flex; align-items:center; gap:var(--sp-4);
+    height:44px; padding:0 var(--sp-4);
+    background:var(--bg-panel);
+    border-bottom:1px solid var(--line);
+    flex-shrink:0;
+  }
+  .dots{ display:flex; gap:7px; flex-shrink:0; }
+  .dots span{ width:11px; height:11px; border-radius:50%; display:block; }
+  .dots span:nth-child(1){ background:#E5645A; }
+  .dots span:nth-child(2){ background:#F5A623; }
+  .dots span:nth-child(3){ background:#5FD3C4; }
+  .titlebar-name{
+    color:var(--fg-dim); font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .titlebar-name b{ color:var(--fg); font-weight:600; }
+  .titlebar-spacer{ flex:1; }
+  .titlebar-actions{ display:flex; align-items:center; gap:var(--sp-2); }
+  .icon-btn{
+    display:flex; align-items:center; justify-content:center;
+    width:30px; height:30px; border-radius:var(--radius-sm);
+    background:transparent; border:1px solid transparent; color:var(--fg-dim);
+    transition:background .15s, color .15s;
+  }
+  .icon-btn:hover{ background:var(--bg-hover); color:var(--fg); }
+  .icon-btn svg{ width:16px; height:16px; }
+  .menu-btn{ display:none; }
+
+  /* ---- workbench (sidebar + editor) ---- */
+  .workbench{ display:flex; flex:1; min-height:0; }
+
+  .sidebar{
+    width:248px; flex-shrink:0;
+    background:var(--bg-elevated);
+    border-right:1px solid var(--line);
+    padding:var(--sp-4) 0;
+    overflow-y:auto;
+  }
+  .sidebar-label{
+    font-size:11px; letter-spacing:.12em; color:var(--fg-faint);
+    padding:0 var(--sp-4); margin-bottom:var(--sp-3);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .sidebar-root{
+    font-size:12px; letter-spacing:.04em; color:var(--fg-dim);
+    padding:0 var(--sp-4) var(--sp-2); font-weight:600;
+  }
+  .tree-item{
+    display:flex; align-items:center; gap:var(--sp-2);
+    padding:6px var(--sp-4) 6px var(--sp-5);
+    font-size:13px; color:var(--fg-dim);
+    border-left:2px solid transparent;
+    cursor:pointer; white-space:nowrap;
+    transition:background .12s, color .12s;
+  }
+  .tree-item:hover{ background:var(--bg-hover); color:var(--fg); }
+  .tree-item.active{ background:var(--bg-elevated); color:var(--fg); border-left-color:var(--amber); }
+  .tree-item .glyph{ font-weight:700; width:18px; text-align:center; flex-shrink:0; font-size:12px; }
+  .glyph.cy{ color:var(--cyan); }
+  .glyph.am{ color:var(--amber); }
+  .tree-folder{
+    display:flex; align-items:center; gap:var(--sp-2);
+    padding:6px var(--sp-4); margin-top:var(--sp-2);
+    font-size:13px; color:var(--fg-dim); cursor:default;
+  }
+  .tree-folder .caret{ color:var(--fg-faint); font-size:10px; }
+  .tree-sub{ padding-left:var(--sp-3); }
+  .tree-sub .tree-item{ padding-left:42px; }
+
+  .editor{ flex:1; display:flex; flex-direction:column; min-width:0; }
+
+  .tabs{
+    display:flex; background:var(--bg-panel); border-bottom:1px solid var(--line);
+    overflow-x:auto; flex-shrink:0; scrollbar-width:none;
+  }
+  .tabs::-webkit-scrollbar{ display:none; }
+  .tab{
+    display:flex; align-items:center; gap:var(--sp-2);
+    padding:0 var(--sp-4); height:38px; font-size:12.5px;
+    color:var(--fg-dim); background:transparent; border:none;
+    border-right:1px solid var(--line);
+    white-space:nowrap; flex-shrink:0;
+    position:relative;
+  }
+  .tab .glyph{ font-weight:700; font-size:11px; }
+  .tab.active{ background:var(--bg-void); color:var(--fg); }
+  .tab.active::after{
+    content:''; position:absolute; left:0; right:0; top:0; height:2px; background:var(--teal, var(--amber));
+  }
+  .tab .x{ color:var(--fg-faint); margin-left:var(--sp-1); font-size:13px; }
+
+  .content{
+    flex:1; overflow-y:auto; background:var(--bg-void);
+    scroll-behavior:smooth;
+  }
+  .file-section{
+    padding:var(--sp-7) var(--sp-7) var(--sp-6);
+    border-bottom:1px dashed var(--line);
+    opacity:0; transform:translateY(14px);
+    transition:opacity .5s ease, transform .5s ease;
+  }
+  .file-section.in-view{ opacity:1; transform:translateY(0); }
+  .file-section:last-child{ border-bottom:none; }
+  .comment{ color:var(--fg-faint); font-size:13px; margin-bottom:var(--sp-4); }
+  .comment .tag{ color:var(--cyan); }
+
+  /* ============ ABOUT / HERO ============ */
+  .hero{ display:flex; gap:var(--sp-8); align-items:flex-start; }
+  .hero-main{ flex:1; min-width:0; }
+  .pill{
+    display:inline-flex; align-items:center; gap:7px;
+    font-size:11px; letter-spacing:.08em; color:var(--teal,var(--cyan));
+    border:1px solid var(--teal-dim, var(--cyan-dim)); border-radius:999px;
+    padding:5px 12px; margin-bottom:var(--sp-5);
+  }
+  .pill-dot{ width:6px; height:6px; border-radius:50%; background:var(--teal,var(--cyan)); animation:pulse 2s infinite; }
+  @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.3; } }
+  .hello{ color:var(--fg-dim); font-size:14px; margin-bottom:var(--sp-2); }
+  .hello b{ color:var(--fg); }
+  .hero h1{
+    font-size:clamp(2rem, 4vw, 2.9rem); line-height:1.1; margin-bottom:var(--sp-4);
+    color:var(--fg);
+  }
+  .hero h1 .cursor{
+    display:inline-block; width:3px; height:.9em; background:var(--amber); margin-left:6px;
+    vertical-align:-2px; animation:blink 1s steps(2) infinite;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+  .hero p.bio{ font-size:15px; max-width:560px; color:var(--fg-dim); margin-bottom:var(--sp-5); }
+  .hero p.bio strong{ color:var(--fg); }
+  .cta-row{ display:flex; gap:var(--sp-3); flex-wrap:wrap; margin-bottom:var(--sp-6); }
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 18px; font-size:13px; border-radius:var(--radius-sm);
+    border:1px solid var(--line); transition:transform .15s, border-color .15s, background .15s;
+  }
+  .btn:hover{ transform:translateY(-1px); }
+  .btn-primary{ background:var(--amber); color:var(--on-amber); border-color:var(--amber); font-weight:600; }
+  .btn-primary:hover{ background:var(--teal,var(--amber)); filter:brightness(1.08); text-decoration:none; }
+  .btn-ghost{ color:var(--fg); background:var(--bg-elevated); }
+  .btn-ghost:hover{ border-color:var(--fg-dim); text-decoration:none; }
+  .btn svg{ width:14px; height:14px; }
+  .stat-row{ display:flex; gap:var(--sp-5); flex-wrap:wrap; }
+  .stat{ }
+  .stat-num{ font-size:18px; font-weight:700; color:var(--teal,var(--amber)); }
+  .stat-label{ font-size:11.5px; color:var(--fg-faint); letter-spacing:.04em; }
+
+  /* radar avatar */
+  .radar-wrap{ flex-shrink:0; width:200px; height:200px; position:relative; display:none; }
+  .radar{
+    width:200px; height:200px; border-radius:50%;
+    border:1px solid var(--line); position:relative; overflow:hidden;
+    background: radial-gradient(circle, var(--bg-elevated) 0%, var(--bg-panel) 100%);
+  }
+  .radar::before, .radar::after{
+    content:''; position:absolute; border:1px solid var(--line); border-radius:50%;
+  }
+  .radar::before{ width:140px; height:140px; top:30px; left:30px; }
+  .radar::after{ width:80px; height:80px; top:60px; left:60px; }
+  .radar-sweep{
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    background:conic-gradient(from 0deg, transparent 0deg, var(--teal-dim,var(--cyan-dim)) 18deg, transparent 40deg);
+    animation:spin 5s linear infinite; border-radius:50%;
+    opacity:.55;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .radar-blip{ position:absolute; width:5px; height:5px; border-radius:50%; background:var(--teal,var(--amber)); box-shadow:0 0 6px var(--teal,var(--amber)); animation:blip 3s ease-in-out infinite; }
+  .radar-blip:nth-child(3){ top:54px; left:140px; animation-delay:.4s; }
+  .radar-blip:nth-child(4){ top:130px; left:70px; animation-delay:1.6s; }
+  @keyframes blip{ 0%,100%{ opacity:0; } 50%{ opacity:1; } }
+  .radar-mono{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:30px; font-weight:700; color:var(--fg); letter-spacing:.05em;
+  }
+  @media (min-width:880px){ .radar-wrap{ display:block; } }
+
+  /* ============ STACK.JSON ============ */
+  .stack-block{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius-md);
+    padding:var(--sp-5); font-size:13.5px; overflow-x:auto;
+  }
+  :root[data-theme="chart"] .stack-block{ border-left:3px solid var(--teal); }
+  .stack-block .b{ color:var(--fg-faint); }
+  .stack-row{ margin:2px 0; padding-left:var(--sp-4); }
+  .k{ color:var(--cyan); }
+  .v{ color:var(--amber); }
+  .stack-cats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:var(--sp-4); margin-top:var(--sp-5); }
+  .stack-cat-title{ font-size:11px; letter-spacing:.1em; color:var(--fg-faint); margin-bottom:var(--sp-2); }
+  .chip-row{ display:flex; gap:var(--sp-2); flex-wrap:wrap; }
+  .chip{
+    font-size:12.5px; padding:5px 11px; border-radius:999px;
+    border:1px solid var(--line); background:var(--bg-elevated); color:var(--fg-dim);
+  }
+  :root[data-theme="chart"] .chip{ border-color:var(--teal-dim); }
+
+  /* ============ EDUCATION ============ */
+  .edu-card{
+    border:1px solid var(--line); border-radius:var(--radius-md); background:var(--bg-panel);
+    padding:var(--sp-5); display:flex; gap:var(--sp-5); flex-wrap:wrap;
+  }
+  :root[data-theme="chart"] .edu-card{ border-left:3px solid var(--purple); }
+  .edu-main{ flex:1; min-width:220px; }
+  .edu-school{ font-size:16px; font-weight:600; color:var(--fg); margin-bottom:2px; }
+  .edu-degree{ color:var(--cyan); font-size:13.5px; margin-bottom:var(--sp-1); }
+  .edu-meta{ font-size:12.5px; color:var(--fg-faint); }
+  .edu-creds{ flex-shrink:0; }
+  .edu-creds-title{ font-size:11px; letter-spacing:.08em; color:var(--fg-faint); margin-bottom:var(--sp-2); }
+
+  /* ============ EXPERIENCE TIMELINE ============ */
+  .timeline{ display:flex; flex-direction:column; gap:0; }
+  .tl-item{ display:flex; gap:var(--sp-5); position:relative; padding-bottom:var(--sp-6); }
+  .tl-item:last-child{ padding-bottom:0; }
+  .tl-rail{ display:flex; flex-direction:column; align-items:center; flex-shrink:0; width:40px; }
+  .tl-num{
+    width:34px; height:34px; border-radius:50%; border:1px solid var(--amber-dim);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; color:var(--amber); background:var(--bg-panel); flex-shrink:0;
+  }
+  .tl-line{ flex:1; width:1px; background:var(--line); margin-top:var(--sp-2); }
+  .tl-body{ flex:1; padding-top:2px; }
+  .tl-role{ font-size:16px; font-weight:600; color:var(--fg); }
+  .tl-company{ color:var(--cyan); font-size:13.5px; }
+  .tl-meta{ font-size:12px; color:var(--fg-faint); margin-bottom:var(--sp-3); }
+  .tl-current{ display:inline-block; margin-left:var(--sp-2); font-size:10.5px; letter-spacing:.06em; color:var(--green,var(--amber)); border:1px solid var(--green-dim,var(--amber-dim)); background:var(--green-dim,var(--amber-dim)); border-radius:999px; padding:1px 8px; }
+  .tl-bullets{ display:flex; flex-direction:column; gap:6px; }
+  .tl-bullets li{ font-size:13.5px; color:var(--fg-dim); padding-left:var(--sp-4); position:relative; }
+  .tl-bullets li::before{ content:'›'; position:absolute; left:0; color:var(--teal,var(--amber)); }
+
+  /* ============ PROJECTS ============ */
+  .proj-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:var(--sp-5); }
+  .proj-card{
+    border:1px solid var(--line); border-radius:var(--radius-md); background:var(--bg-panel);
+    padding:var(--sp-5); display:flex; flex-direction:column; transition:border-color .15s, transform .15s;
+  }
+  .proj-card:hover{ border-color:var(--teal,var(--cyan-dim)); transform:translateY(-2px); border-left:3px solid var(--teal,var(--cyan)); }
+  .proj-file{ display:flex; align-items:center; gap:var(--sp-2); font-size:12.5px; color:var(--fg-faint); margin-bottom:var(--sp-3); }
+  .proj-title{ font-size:17px; font-weight:600; margin-bottom:var(--sp-2); color:var(--fg); }
+  .proj-card p{ font-size:13.5px; margin-bottom:var(--sp-4); }
+  .proj-bullets{ display:flex; flex-direction:column; gap:5px; margin-bottom:var(--sp-4); }
+  .proj-bullets li{ font-size:13px; color:var(--fg-dim); padding-left:var(--sp-4); position:relative; }
+  .proj-bullets li::before{ content:'›'; position:absolute; left:0; color:var(--teal,var(--cyan)); }
+  .proj-tags{ display:flex; gap:var(--sp-2); flex-wrap:wrap; margin-bottom:var(--sp-4); }
+  .proj-link{ margin-top:auto; font-size:13px; display:inline-flex; align-items:center; gap:6px; }
+
+  /* ============ CONTACT ============ */
+  .term{
+    border:1px solid var(--line); border-radius:var(--radius-md); overflow:hidden; max-width:560px;
+  }
+  .term-bar{ background:var(--bg-elevated); padding:8px var(--sp-4); font-size:12px; color:var(--fg-faint); border-bottom:1px solid var(--line); }
+  .term-body{ background:var(--bg-panel); padding:var(--sp-5); font-size:13.5px; }
+  .term-prompt{ color:var(--cyan); }
+  .term-cmd{ color:var(--fg); }
+  .term-line{ margin:3px 0; }
+  .term-line .k{ color:var(--cyan); }
+  .term-line .v{ color:var(--amber); }
+  .term-line a{ color:var(--amber); }
+  .term-line a:hover{ color:var(--cyan); }
+  .footer-line{ margin-top:var(--sp-6); font-size:12px; color:var(--fg-faint); }
+
+  /* ============ STATUS BAR ============ */
+  .statusbar{
+    display:flex; align-items:center; gap:var(--sp-4);
+    height:26px; padding:0 var(--sp-4); flex-shrink:0;
+    background:var(--teal,var(--cyan-dim)); color:var(--bg-panel); font-size:11.5px;
+    overflow-x:auto; white-space:nowrap;
+  }
+  :root[data-theme="chart"] .statusbar{ color:var(--bg-panel); }
+  .statusbar .sep{ opacity:.5; }
+  .statusbar .grow{ flex:1; }
+  .signal-bars{ display:inline-flex; align-items:flex-end; gap:2px; height:10px; margin:0 4px; }
+  .signal-bars span{ width:3px; background:currentColor; opacity:.6; animation:bar 1.6s ease-in-out infinite; }
+  .signal-bars span:nth-child(1){ height:4px; animation-delay:0s; }
+  .signal-bars span:nth-child(2){ height:6px; animation-delay:.2s; }
+  .signal-bars span:nth-child(3){ height:8px; animation-delay:.4s; }
+  .signal-bars span:nth-child(4){ height:10px; animation-delay:.6s; }
+  @keyframes bar{ 0%,100%{ opacity:.4; } 50%{ opacity:1; } }
+  .status-avail{ display:flex; align-items:center; gap:6px; font-weight:600; }
+  .status-avail .d{ width:7px; height:7px; border-radius:50%; background:var(--teal,var(--amber)); box-shadow:0 0 5px var(--teal,var(--amber)); animation:pulse 2s infinite; }
+
+  /* ============ MOBILE ============ */
+  .scrim{ display:none; }
+  @media (max-width:860px){
+    .menu-btn{ display:flex; }
+    .titlebar-name{ font-size:11.5px; }
+    .sidebar{
+      position:fixed; top:44px; bottom:0; left:0; z-index:40; width:78vw; max-width:280px;
+      transform:translateX(-100%); transition:transform .22s ease; box-shadow:var(--shadow);
+    }
+    .sidebar.open{ transform:translateX(0); }
+    .scrim.open{
+      display:block; position:fixed; inset:44px 0 0 0; background:rgba(0,0,0,.45); z-index:30;
+    }
+    .file-section{ padding:var(--sp-6) var(--sp-4) var(--sp-5); }
+    .hero{ flex-direction:column; }
+    .statusbar{ font-size:10.5px; gap:var(--sp-3); }
+    .status-hide-sm{ display:none; }
+  }
+
+  /* ============ RESUME MODAL ============ */
+  .resume-overlay{
+    display:none; position:fixed; inset:0; z-index:100;
+    background:rgba(10,18,35,0.75); backdrop-filter:blur(4px);
+    align-items:center; justify-content:center;
+  }
+  .resume-overlay.open{ display:flex; }
+  .resume-modal{
+    position:relative; width:min(860px,95vw); height:min(94vh,1100px);
+    background:var(--bg-panel); border-radius:var(--radius-md);
+    box-shadow:0 24px 60px rgba(0,0,0,0.45);
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  .resume-modal-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px var(--sp-4); background:var(--bg-elevated);
+    border-bottom:1px solid var(--line); flex-shrink:0; gap:var(--sp-3);
+  }
+  .resume-modal-title{ font-size:13px; color:var(--fg-dim); }
+  .resume-modal-title b{ color:var(--fg); }
+  .resume-modal-actions{ display:flex; gap:var(--sp-2); }
+  .resume-modal iframe{
+    flex:1; border:none; width:100%; background:#fff;
+  }
+  .resume-close{
+    display:flex; align-items:center; justify-content:center;
+    width:28px; height:28px; border-radius:var(--radius-sm);
+    background:transparent; border:1px solid var(--line); color:var(--fg-dim);
+    transition:background .12s, color .12s;
+  }
+  .resume-close:hover{ background:var(--red); color:#fff; border-color:var(--red); }
+  .resume-dl{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:12px; padding:5px 12px; border-radius:var(--radius-sm);
+    background:var(--teal,var(--amber)); color:var(--on-amber);
+    border:none; font-family:var(--mono); cursor:pointer; font-weight:600;
+    transition:filter .12s;
+  }
+  .resume-dl:hover{ filter:brightness(1.08); text-decoration:none; }
+  .resume-dl svg{ width:13px; height:13px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TITLEBAR -->
+  <header class="titlebar">
+    <button class="icon-btn menu-btn" id="menuBtn" aria-label="Toggle file explorer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div class="titlebar-name"><b>dennyle.dev</b> — Denny Le — Visual Studio Code</div>
+    <div class="titlebar-spacer"></div>
+    <div class="titlebar-actions">
+      <a class="icon-btn" href="https://github.com/csusb-denny" target="_blank" rel="noopener" aria-label="GitHub">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.79-.25.79-.55 0-.27-.01-1.17-.02-2.12-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.75 2.69 1.25 3.34.96.1-.74.4-1.25.72-1.54-2.56-.29-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.7 5.41-5.27 5.69.42.36.78 1.08.78 2.18 0 1.58-.01 2.85-.01 3.24 0 .31.21.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z"/></svg>
+      </a>
+      <button class="icon-btn" id="themeBtn" aria-label="Toggle theme">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="workbench">
+
+    <div class="scrim" id="scrim"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-label"><span>EXPLORER</span><span>⋯</span></div>
+      <div class="sidebar-root">DENNYLE-PORTFOLIO</div>
+      <div class="tree-item" data-target="about"><span class="glyph cy">M↓</span> about.md</div>
+      <div class="tree-item" data-target="stack"><span class="glyph am">{}</span> stack.json</div>
+      <div class="tree-item" data-target="education"><span class="glyph cy">≣</span> education.yaml</div>
+      <div class="tree-item" data-target="experience"><span class="glyph am">≣</span> experience.yaml</div>
+      <div class="tree-folder"><span class="caret">▾</span> projects</div>
+      <div class="tree-sub">
+        <div class="tree-item" data-target="projects"><span class="glyph am">◆</span> vwap_engine.py</div>
+        <div class="tree-item" data-target="projects"><span class="glyph am">◆</span> devlog_api.py</div>
+      </div>
+      <div class="tree-item" data-target="contact"><span class="glyph cy">$</span> contact.sh</div>
+    </aside>
+
+    <!-- EDITOR -->
+    <div class="editor">
+      <nav class="tabs" id="tabs">
+        <button class="tab active" data-target="about"><span class="glyph cy">M↓</span> about.md <span class="x">×</span></button>
+        <button class="tab" data-target="stack"><span class="glyph am">{}</span> stack.json <span class="x">×</span></button>
+        <button class="tab" data-target="education"><span class="glyph cy">≣</span> education.yaml <span class="x">×</span></button>
+        <button class="tab" data-target="experience"><span class="glyph am">≣</span> experience.yaml <span class="x">×</span></button>
+        <button class="tab" data-target="projects"><span class="glyph am">◆</span> projects <span class="x">×</span></button>
+        <button class="tab" data-target="contact"><span class="glyph cy">$</span> contact.sh <span class="x">×</span></button>
+      </nav>
+
+      <main class="content" id="content">
+
+        <!-- ABOUT -->
+        <section id="about" class="file-section">
+          <div class="comment"><span class="tag">//</span> about.md — who I am</div>
+          <div class="hero">
+            <div class="hero-main">
+              <div class="pill"><span class="pill-dot"></span>AVAILABLE FOR SOFTWARE ENGINEERING ROLES</div>
+              <div class="hello">// hi, my name is <b>Denny Le</b></div>
+              <h1>Software Engineer<span class="cursor"></span></h1>
+              <p class="bio">Computer Science grad (<strong>CSUSB, '26</strong>) building full-stack systems with <strong>FastAPI, PostgreSQL, and Firebase</strong> — and, somewhat improbably, spending the rest of the week out in the field measuring the wireless signals those systems run on as an <strong>RF engineer</strong>.</p>
+              <div class="cta-row">
+                <button class="btn btn-primary" id="viewResumeBtn" onclick="openResume()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                  View Resume
+                </button>
+                <a class="btn btn-ghost" href="https://github.com/csusb-denny" target="_blank" rel="noopener">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.79-.25.79-.55 0-.27-.01-1.17-.02-2.12-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.75 2.69 1.25 3.34.96.1-.74.4-1.25.72-1.54-2.56-.29-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.7 5.41-5.27 5.69.42.36.78 1.08.78 2.18 0 1.58-.01 2.85-.01 3.24 0 .31.21.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z"/></svg>
+                  GitHub
+                </a>
+                <a class="btn btn-ghost" href="mailto:dennyle0103@gmail.com">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4V4z"/><path d="M4 6l8 7 8-7"/></svg>
+                  Say hi
+                </a>
+              </div>
+              <div class="stat-row">
+                <div class="stat"><div class="stat-num">2026</div><div class="stat-label">B.S. COMPUTER SCIENCE</div></div>
+                <div class="stat"><div class="stat-num">5-day</div><div class="stat-label">SOLO PLATFORM SPRINT</div></div>
+                <div class="stat"><div class="stat-num">2</div><div class="stat-label">DOMAINS: CODE + RF</div></div>
+              </div>
+            </div>
+            <div class="radar-wrap" aria-hidden="true">
+              <div class="radar">
+                <div class="radar-sweep"></div>
+                <div class="radar-blip"></div>
+                <div class="radar-blip"></div>
+                <div class="radar-mono">DL</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STACK -->
+        <section id="stack" class="file-section">
+          <div class="comment"><span class="tag">//</span> stack.json — core technologies &amp; toolbelt</div>
+          <div class="stack-block">
+            <span class="b">{</span>
+            <div class="stack-row"><span class="k">"languages"</span><span class="b">: [</span> <span class="v">"Python"</span>, <span class="v">"TypeScript"</span>, <span class="v">"JavaScript"</span>, <span class="v">"SQL"</span>, <span class="v">"C++"</span> <span class="b">],</span></div>
+            <div class="stack-row"><span class="k">"frameworks"</span><span class="b">: [</span> <span class="v">"FastAPI"</span>, <span class="v">"Flask"</span>, <span class="v">"REST APIs"</span> <span class="b">],</span></div>
+            <div class="stack-row"><span class="k">"data"</span><span class="b">: [</span> <span class="v">"PostgreSQL"</span>, <span class="v">"MySQL"</span>, <span class="v">"Firebase"</span>, <span class="v">"Firestore"</span> <span class="b">],</span></div>
+            <div class="stack-row"><span class="k">"devops"</span><span class="b">: [</span> <span class="v">"Docker"</span>, <span class="v">"Kubernetes"</span>, <span class="v">"Git"</span>, <span class="v">"GitHub"</span> <span class="b">]</span></div>
+            <span class="b">}</span>
+          </div>
+          <div class="stack-cats">
+            <div>
+              <div class="stack-cat-title">LANGUAGES</div>
+              <div class="chip-row"><span class="chip">Python</span><span class="chip">TypeScript</span><span class="chip">JavaScript</span><span class="chip">SQL</span><span class="chip">C++</span></div>
+            </div>
+            <div>
+              <div class="stack-cat-title">DATA &amp; INFRA</div>
+              <div class="chip-row"><span class="chip">PostgreSQL</span><span class="chip">Firebase</span><span class="chip">Docker</span><span class="chip">Kubernetes</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- EDUCATION -->
+        <section id="education" class="file-section">
+          <div class="comment"><span class="tag">//</span> education.yaml — academic background</div>
+          <div class="edu-card">
+            <div class="edu-main">
+              <div class="edu-school">California State University, San Bernardino</div>
+              <div class="edu-degree">B.S. Computer Science</div>
+              <div class="edu-meta">San Bernardino, California · Graduating May 2026</div>
+            </div>
+            <div class="edu-creds">
+              <div class="edu-creds-title">ADDITIONAL CREDENTIALS</div>
+              <div class="chip-row">
+                <span class="chip">Computer Science, A.S.</span>
+                <span class="chip">Computer Information Systems, A.S.</span>
+                <span class="chip">Computer Programming, Cert.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- EXPERIENCE -->
+        <section id="experience" class="file-section">
+          <div class="comment"><span class="tag">//</span> experience.yaml — where I've worked</div>
+          <div class="timeline">
+            <div class="tl-item">
+              <div class="tl-rail"><div class="tl-num">01</div><div class="tl-line"></div></div>
+              <div class="tl-body">
+                <div class="tl-role">Full-Stack Intern</div>
+                <div class="tl-company">RideSplits</div>
+                <div class="tl-meta">San Bernardino, California · Jan 2026 – Apr 2026</div>
+                <ul class="tl-bullets">
+                  <li>Shipped a production-ready, Reddit-style FAQ platform in a 5-day sprint — owned architecture, development, testing, and deployment solo.</li>
+                  <li>Designed a normalized Firestore database covering users, questions, answers, voting, moderation, and role-based permissions.</li>
+                  <li>Enforced server-side access control with Firebase Authentication and Firestore security rules.</li>
+                  <li>Built real-time data pipelines on Firestore that cut reporting latency by roughly 100ms.</li>
+                  <li>Built internal dashboards giving the team visibility into ride activity and platform performance.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-rail"><div class="tl-num">02</div></div>
+              <div class="tl-body">
+                <div class="tl-role">Radio Frequency Engineer <span class="tl-current">CURRENT</span></div>
+                <div class="tl-company">Scarlet Wireless</div>
+                <div class="tl-meta">Los Angeles, California · Mar 2026 – Present</div>
+                <ul class="tl-bullets">
+                  <li>Collect and validate wireless network performance data across multiple regions using automated RF testing platforms.</li>
+                  <li>Analyze throughput, latency, signal strength, and handoff performance to surface network quality trends.</li>
+                  <li>Transform large CSV datasets into structured reports for engineering stakeholders.</li>
+                  <li>Run automated testing workflows at scale while preserving data integrity and reporting accuracy.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PROJECTS -->
+        <section id="projects" class="file-section">
+          <div class="comment"><span class="tag">//</span> projects/ — things I've built on my own time</div>
+          <div class="proj-grid">
+            <div class="proj-card">
+              <div class="proj-file"><span class="glyph am">◆</span> vwap_engine.py</div>
+              <div class="proj-title">Market Analytics API — Real-Time VWAP Engine</div>
+              <p>A FastAPI service that computes real-time VWAP metrics from live financial market data streams.</p>
+              <ul class="proj-bullets">
+                <li>Modular Data Ingestion, Business Logic, and API Routing layers for maintainability and extensibility.</li>
+                <li>Resilient error handling and fallbacks for third-party outages and rate limiting.</li>
+                <li>Flexible query params — symbol, resolution, lookback window — for varied analytics use cases.</li>
+                <li>Containerized with Docker for consistent local-to-cloud deploys.</li>
+              </ul>
+              <div class="proj-tags"><span class="chip">FastAPI</span><span class="chip">Python</span><span class="chip">Docker</span></div>
+              <a class="proj-link" href="https://github.com/csusb-denny/MarketMotionInsights" target="_blank" rel="noopener">View on GitHub →</a>
+            </div>
+            <div class="proj-card">
+              <div class="proj-file"><span class="glyph am">◆</span> devlog_api.py</div>
+              <div class="proj-title">DevLog — Task Management &amp; API Platform</div>
+              <p>A project and task management platform with auth, task assignment, and project-tracking workflows.</p>
+              <ul class="proj-bullets">
+                <li>REST APIs built with FastAPI, secured with JWT authentication.</li>
+                <li>Relational PostgreSQL schemas designed for fast queries and clean data integrity.</li>
+                <li>Project-tracking workflows built around real task-assignment patterns.</li>
+              </ul>
+              <div class="proj-tags"><span class="chip">FastAPI</span><span class="chip">PostgreSQL</span><span class="chip">JWT</span></div>
+              <a class="proj-link" href="https://github.com/csusb-denny/DevLog" target="_blank" rel="noopener">View on GitHub →</a>
+            </div>
+          </div>
+        </section>
+
+        <!-- CONTACT -->
+        <section id="contact" class="file-section">
+          <div class="comment"><span class="tag">//</span> contact.sh — let's connect</div>
+          <div class="term">
+            <div class="term-bar">zsh — contact.sh</div>
+            <div class="term-body">
+              <div class="term-line"><span class="term-prompt">denny@dev</span> ~ % <span class="term-cmd">cat contact.json</span></div>
+              <div class="term-line">&#123;</div>
+              <div class="term-line">&nbsp;&nbsp;<span class="k">"email"</span>: <a href="mailto:dennyle0103@gmail.com">"dennyle0103@gmail.com"</a>,</div>
+              <div class="term-line">&nbsp;&nbsp;<span class="k">"phone"</span>: <a href="tel:+17146738779">"(714) 673-8779"</a>,</div>
+              <div class="term-line">&nbsp;&nbsp;<span class="k">"location"</span>: <span class="v">"Hesperia, CA"</span>,</div>
+              <div class="term-line">&nbsp;&nbsp;<span class="k">"github"</span>: <a href="https://github.com/csusb-denny" target="_blank" rel="noopener">"github.com/csusb-denny"</a>,</div>
+              <div class="term-line">&nbsp;&nbsp;<span class="k">"linkedin"</span>: <a href="https://www.linkedin.com/in/denny-le-50b977396/" target="_blank" rel="noopener">"linkedin.com/in/denny-le-50b977396"</a></div>
+              <div class="term-line">&#125;</div>
+              <div class="term-line"><span class="term-prompt">denny@dev</span> ~ % <span class="cursor" style="display:inline-block;width:7px;height:1em;background:var(--amber);vertical-align:-3px;animation:blink 1s steps(2) infinite;"></span></div>
+            </div>
+          </div>
+          <div class="footer-line">© 2026 Denny Le — $ compiled with coffee and a clean signal-to-noise ratio</div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <footer class="statusbar">
+    <span>main</span>
+    <span class="sep">·</span>
+    <span class="status-hide-sm">0 errors, 0 warnings</span>
+    <span class="sep status-hide-sm">·</span>
+    <span class="status-hide-sm">UTF-8</span>
+    <span class="sep status-hide-sm">·</span>
+    <span class="status-hide-sm">IBM Plex Mono</span>
+    <span class="grow"></span>
+    <span>Signal -52dBm <span class="signal-bars"><span></span><span></span><span></span><span></span></span></span>
+    <span class="sep">·</span>
+    <span class="status-avail"><span class="d"></span>Available for hire</span>
+  </footer>
+
+  <!-- RESUME MODAL -->
+  <div class="resume-overlay" id="resumeOverlay" role="dialog" aria-label="Resume viewer" aria-modal="true">
+    <div class="resume-modal">
+      <div class="resume-modal-bar">
+        <div class="resume-modal-title"><b>DennyLe_Resume.pdf</b> — Denny Le</div>
+        <div class="resume-modal-actions">
+          <a class="resume-dl" href="DennyLe_Resume.pdf" download="DennyLe_Resume.pdf">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+            Download
+          </a>
+          <button class="resume-close icon-btn" onclick="closeResume()" aria-label="Close resume">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+      <iframe id="resumeFrame" title="Denny Le Resume"></iframe>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // theme toggle
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('themeBtn');
+  const themeIcon = document.getElementById('themeIcon');
+  function setTheme(t){
+    root.setAttribute('data-theme', t);
+    themeIcon.innerHTML = t === 'dark'
+      ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>'
+      : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+    themeBtn.title = t === 'dark' ? 'Switch to chart theme' : 'Switch to dark theme';
+    try{ window.__theme = t; }catch(e){}
+  }
+  themeBtn.addEventListener('click', () => {
+    const cur = root.getAttribute('data-theme');
+    setTheme(cur === 'chart' ? 'dark' : 'chart');
+  });
+
+  // mobile sidebar
+  const sidebar = document.getElementById('sidebar');
+  const scrim = document.getElementById('scrim');
+  const menuBtn = document.getElementById('menuBtn');
+  function closeSidebar(){ sidebar.classList.remove('open'); scrim.classList.remove('open'); }
+  menuBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('open'); scrim.classList.toggle('open');
+  });
+  scrim.addEventListener('click', closeSidebar);
+
+  // navigation: sidebar + tabs scroll to section, set active states
+  const sections = Array.from(document.querySelectorAll('.file-section'));
+  const treeItems = Array.from(document.querySelectorAll('.tree-item'));
+  const tabs = Array.from(document.querySelectorAll('.tab'));
+
+  function activate(id){
+    treeItems.forEach(t => t.classList.toggle('active', t.dataset.target === id));
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.target === id));
+  }
+  function goTo(id){
+    const el = document.getElementById(id);
+    if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+    activate(id);
+    closeSidebar();
+  }
+  treeItems.forEach(t => t.addEventListener('click', () => goTo(t.dataset.target)));
+  tabs.forEach(t => t.addEventListener('click', () => goTo(t.dataset.target)));
+
+  // scroll-spy + fade-in
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        entry.target.classList.add('in-view');
+        if(entry.intersectionRatio > 0.4) activate(entry.target.id);
+      }
+    });
+  }, { threshold: [0.15, 0.4], rootMargin: '-10% 0px -10% 0px' });
+  sections.forEach(s => observer.observe(s));
+
+  // resume modal
+  function openResume(){
+    const overlay = document.getElementById('resumeOverlay');
+    const frame = document.getElementById('resumeFrame');
+    if(!frame.src) frame.src = 'DennyLe_Resume.pdf';
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeResume(){
+    document.getElementById('resumeOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('resumeOverlay').addEventListener('click', function(e){
+    if(e.target === this) closeResume();
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') closeResume();
+  });
+</script>
+</body>
+</html>
